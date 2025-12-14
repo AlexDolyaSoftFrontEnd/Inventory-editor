@@ -1,0 +1,32 @@
+{
+  "inventory": {
+    "stock": "00002165461232",
+    "make": "ABARTH",
+    "model": "TESTQ",
+    "year": "2005",
+    "vin": "QWERTYUIOPP"
+  },
+  "tabs": [
+    "General",
+    "Description",
+    "Options",
+    "Checklist",
+    "Keys",
+    "Disclosures",
+    "Other"
+  ],
+  "general": {
+    "locations": [
+      "Default location",
+      "Main warehouse",
+      "Showroom",
+      "Remote storage"
+    ],
+    "groups": [
+      "New vehicles",
+      "Used vehicles",
+      "Demo",
+      "Wholesale"
+    ]
+  }
+}

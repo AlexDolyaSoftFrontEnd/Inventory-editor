@@ -1,33 +1,99 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import inventoryData from "./data/inventory.json";
 import styles from "./EditInventory.module.css";
 
-const TABS = [
-  "General",
-  "Description",
-  "Options",
-  "Checklist",
-  "Keys",
-  "Disclosures",
-  "Other",
-];
-
+/* ===============================
+   EditInventory
+=============================== */
 export default function EditInventory() {
-  const [activeTab, setActiveTab] = useState("General");
+  /* ===============================
+     State
+  =============================== */
+  const [data, setData] = useState(null);
+  const [activeTab, setActiveTab] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const currentIndex = TABS.indexOf(activeTab);
+  /* ===============================
+     Load inventory data (local json)
+  =============================== */
 
+  useEffect(() => {
+  const initInventory = () => {
+    try {
+      if (!inventoryData) {
+        throw new Error("Inventory data is not provided");
+      }
+
+      if (!Array.isArray(inventoryData.tabs) || inventoryData.tabs.length === 0) {
+        throw new Error("Inventory tabs are missing or empty");
+      }
+
+      setData(inventoryData);
+      setActiveTab(inventoryData.tabs[0]);
+    } catch (error) {
+      console.error("Inventory initialization failed:", error);
+      setError("Inventory data is unavailable or corrupted");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  initInventory();
+}, []);
+
+
+  /* ===============================
+     UI states
+  =============================== */
+  if (loading) {
+    return <div className={styles.loader}>Загрузка данных…</div>;
+  }
+
+  if (error) {
+    return (
+      <div className={styles.message}>
+        <h2 className={styles.message__title}>Ошибка загрузки</h2>
+        <p className={styles.message__text}>{error}</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className={styles.message}>
+        <h2 className={styles.message__title}>Нет данных</h2>
+        <p className={styles.message__text}>
+          Информация по инвентарю отсутствует или была удалена.
+        </p>
+      </div>
+    );
+  }
+
+  /* ===============================
+     Data
+  =============================== */
+  const { inventory, tabs, general } = data;
+  const currentIndex = tabs.indexOf(activeTab);
+
+  /* ===============================
+     Navigation handlers
+  =============================== */
   const goNext = () => {
-    if (currentIndex < TABS.length - 1) {
-      setActiveTab(TABS[currentIndex + 1]);
+    if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1]);
     }
   };
 
   const goBack = () => {
     if (currentIndex > 0) {
-      setActiveTab(TABS[currentIndex - 1]);
+      setActiveTab(tabs[currentIndex - 1]);
     }
   };
 
+  /* ===============================
+     Render
+  =============================== */
   return (
     <section className={styles.inventory}>
       {/* ===== Header ===== */}
@@ -36,19 +102,19 @@ export default function EditInventory() {
 
         <div className={styles.inventory__meta}>
           <span>
-            Stock <strong className={styles.inventory__accent}>00002165461232</strong>
+            Stock <strong>{inventory.stock}</strong>
           </span>
           <span>
-            Make <strong className={styles.inventory__accent}>ABARTH</strong>
+            Make <strong>{inventory.make}</strong>
           </span>
           <span>
-            Model <strong className={styles.inventory__accent}>TESTQ</strong>
+            Model <strong>{inventory.model}</strong>
           </span>
           <span>
-            Year <strong className={styles.inventory__accent}>2005</strong>
+            Year <strong>{inventory.year}</strong>
           </span>
           <span>
-            VIN <strong className={styles.inventory__accent}>QWERTYUIOPP</strong>
+            VIN <strong>{inventory.vin}</strong>
           </span>
         </div>
 
@@ -57,9 +123,9 @@ export default function EditInventory() {
 
       <div className={styles.inventory__body}>
         {/* ===== Sidebar ===== */}
-        <nav className={styles.sidebar} aria-label="Inventory navigation">
+        <nav className={styles.sidebar}>
           <ul className={styles.sidebar__list}>
-            {TABS.map((tab) => (
+            {tabs.map((tab) => (
               <li
                 key={tab}
                 className={`${styles.sidebar__item} ${
@@ -74,7 +140,7 @@ export default function EditInventory() {
           </ul>
         </nav>
 
-        {/* ===== Main Content ===== */}
+        {/* ===== Content ===== */}
         <main className={styles.content}>
           {activeTab === "General" ? (
             <section className={styles.section}>
@@ -83,22 +149,24 @@ export default function EditInventory() {
               <form className={styles.form}>
                 <div className={styles.form__row}>
                   <div className={styles.form__field}>
-                    <label className={styles.form__label}>Location name</label>
+                    <label className={styles.form__label}>
+                      Location name
+                    </label>
                     <select className={styles.form__control}>
-                      <option>Default location</option>
-                      <option>Main warehouse</option>
-                      <option>Showroom</option>
-                      <option>Remote storage</option>
+                      {general.locations.map((item) => (
+                        <option key={item}>{item}</option>
+                      ))}
                     </select>
                   </div>
 
                   <div className={styles.form__field}>
-                    <label className={styles.form__label}>Inventory group</label>
+                    <label className={styles.form__label}>
+                      Inventory group
+                    </label>
                     <select className={styles.form__control}>
-                      <option>New vehicles</option>
-                      <option>Used vehicles</option>
-                      <option>Demo</option>
-                      <option>Wholesale</option>
+                      {general.groups.map((item) => (
+                        <option key={item}>{item}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -108,23 +176,18 @@ export default function EditInventory() {
                 <div className={styles.form__row}>
                   <div className={styles.form__field}>
                     <label className={styles.form__label}>VIN</label>
-                    <div className={styles.form__vin}>
-                      <input
-                        className={styles.form__control}
-                        value="QWERTYUIOPP"
-                        readOnly
-                      />
-                      <button type="button" className={styles.form__decode}>
-                        DECODE
-                      </button>
-                    </div>
+                    <input
+                      className={styles.form__control}
+                      value={inventory.vin}
+                      readOnly
+                    />
                   </div>
 
                   <div className={styles.form__field}>
                     <label className={styles.form__label}>Stock</label>
                     <input
                       className={styles.form__control}
-                      value="2165461232"
+                      value={inventory.stock}
                       readOnly
                     />
                   </div>
@@ -137,22 +200,14 @@ export default function EditInventory() {
             </section>
           )}
 
-          {/* ===== FOOTER ACTIONS ===== */}
+          {/* ===== Footer actions ===== */}
           <div className={styles.actions}>
-            <button
-              type="button"
-              className={styles.actions__back}
-              onClick={goBack}
-              disabled={currentIndex === 0}
-            >
+            <button onClick={goBack} disabled={currentIndex === 0}>
               Back
             </button>
-
             <button
-              type="button"
-              className={styles.actions__next}
               onClick={goNext}
-              disabled={currentIndex === TABS.length - 1}
+              disabled={currentIndex === tabs.length - 1}
             >
               Next
             </button>
